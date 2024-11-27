@@ -180,23 +180,7 @@ for operacion in OPERACIONES:
 
 driver.quit()
 
-#df = pd.DataFrame(data_list)
-
-""" #se abre un archivo csv con datos anteriores en caso de que exista
-try:
-    df_csv = pd.read_csv("inmobiliaria.csv", sep=";")
-except:
-    df_csv = pd.DataFrame()
-
-df_csv["ID"] = df_csv["ID"].astype(str)
-
-#se concatenan ambos dataframes y se eliminan duplicados
-merged_df = pd.concat([df, df_csv], ignore_index=True)
-merged_df.drop_duplicates(subset=['ID'], inplace=True)
-
-#se guarda el dataframe en un archivo csv
-merged_df.to_csv("inmobiliaria.csv", index=False, sep=";")
-"""
+#conexion a base de datos
 cnx = con.connect(user="pablo_b", 
                               password="Webscrap123", 
                               host="big-data-webscrapping2.mysql.database.azure.com", 
@@ -208,7 +192,6 @@ cursor.execute(query)
 #poner data de base de datos en dataframe
 data = pd.DataFrame(cursor.fetchall())
 print(data) 
-#data_to_insert = pd.read_csv("inmobiliaria.csv", sep=";")
 data_to_insert = pd.DataFrame(data_list)
 #borrar filas que ya existen
 try:
