@@ -2,21 +2,16 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-#from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.chrome.service import Service
-#from webdriver_manager.firefox import GeckoDriverManager
-from datetime import datetime
-import pandas as pd
-import locale
-import time
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementNotInteractableException
+import mysql.connector as con
+import pandas as pd
+import time
+
 
 OPERACIONES = ["Venta", "Arriendo"]
 PROPIEDADES = ["Departamentos", "Casas"]
-
-#Setea el idioma a español para trabajar las fechas
-locale.setlocale(locale.LC_ALL,'es_ES.UTF-8')
 
 driver = webdriver.Chrome(service=Service("chromedriver-win64/chromedriver.exe"))
 
@@ -100,8 +95,9 @@ for operacion in OPERACIONES:
 
                 print(len(elements))
                 
-                #implicitwait
+                #se setea la espera implícita a 0, ya que llegado a este punto, la página ya está cargada
                 driver.implicitly_wait(0)
+
                 for element in elements:
                     link = element.find_element(By.TAG_NAME, "a")
                     if link.get_attribute("href") not in url_list and "/tienda-oficial/" not in link.get_attribute("href"):
@@ -112,6 +108,7 @@ for operacion in OPERACIONES:
                         except NoSuchElementException:
                             pass
                         url_list.append(link.get_attribute("href"))
+                #volvemos a setear la espera implícita a 2 segundos
                 driver.implicitly_wait(2)
                 element = driver.find_element(By.CLASS_NAME, "andes-pagination__button.andes-pagination__button--next")
                 element = element.find_element(By.TAG_NAME, "a")
@@ -126,7 +123,11 @@ for operacion in OPERACIONES:
         #visitar cada una de las urls y obtener los datos de la propiedad
         for url in url_list:
             print(url)
-            driver.get(url)
+            while(True):
+                driver.get(url)
+                #a veces la página redirecciona a mercado libre, nos aseguramos de que estamos en la página a la que queremos ir
+                if driver.current_url == url:
+                    break            
             data = {}
             data['url'] = url.split("#")[0]
             element = driver.find_element(By.CLASS_NAME, "ui-vpp-denounce")
@@ -142,6 +143,8 @@ for operacion in OPERACIONES:
             if data['Currency'] == "$":
                 data['Currency'] = "CLP"
             data['Precio'] = element.find_element(By.CLASS_NAME, "andes-money-amount__fraction").text.replace(".", "").replace(",", ".")
+            
+            #este dato no siempre está presente, por lo que se maneja la excepción
             try:
                 element = driver.find_element(By.CLASS_NAME, "ui-pdp-media.ui-vip-location__subtitle.ui-pdp-color--BLACK")
                 data['Ubicacion'] = element.find_element(By.TAG_NAME, "p").text
@@ -194,11 +197,6 @@ merged_df.drop_duplicates(subset=['ID'], inplace=True)
 #se guarda el dataframe en un archivo csv
 merged_df.to_csv("inmobiliaria.csv", index=False, sep=";")
 
-
-import mysql.connector as con
-import pandas as pd
-
-
 cnx = con.connect(user="pablo_b", 
                               password="Webscrap123", 
                               host="big-data-webscrapping2.mysql.database.azure.com", 
@@ -207,7 +205,7 @@ cnx = con.connect(user="pablo_b",
 cursor = cnx.cursor()
 query = ("SELECT * FROM ws_inmobiliaria.ws_aviso;")
 cursor.execute(query)
-#poner data en datafra,e
+#poner data de base de datos en dataframe
 data = pd.DataFrame(cursor.fetchall())
 print(data)
 data_to_insert = pd.read_csv("inmobiliaria.csv", sep=";")
