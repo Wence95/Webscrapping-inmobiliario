@@ -149,7 +149,7 @@ for operacion in OPERACIONES:
                 element = driver.find_element(By.CLASS_NAME, "ui-pdp-media.ui-vip-location__subtitle.ui-pdp-color--BLACK")
                 data['Ubicacion'] = element.find_element(By.TAG_NAME, "p").text
             except:
-                data['Ubicacion'] = ""
+                data['Ubicacion'] = None
 
             #esperar a que sea cliqueable el elemento
             element = WebDriverWait(driver, 10).until(
@@ -180,9 +180,9 @@ for operacion in OPERACIONES:
 
 driver.quit()
 
-df = pd.DataFrame(data_list)
+#df = pd.DataFrame(data_list)
 
-#se abre un archivo csv con datos anteriores en caso de que exista
+""" #se abre un archivo csv con datos anteriores en caso de que exista
 try:
     df_csv = pd.read_csv("inmobiliaria.csv", sep=";")
 except:
@@ -196,7 +196,7 @@ merged_df.drop_duplicates(subset=['ID'], inplace=True)
 
 #se guarda el dataframe en un archivo csv
 merged_df.to_csv("inmobiliaria.csv", index=False, sep=";")
-
+"""
 cnx = con.connect(user="pablo_b", 
                               password="Webscrap123", 
                               host="big-data-webscrapping2.mysql.database.azure.com", 
@@ -207,11 +207,12 @@ query = ("SELECT * FROM ws_inmobiliaria.ws_aviso;")
 cursor.execute(query)
 #poner data de base de datos en dataframe
 data = pd.DataFrame(cursor.fetchall())
-print(data)
-data_to_insert = pd.read_csv("inmobiliaria.csv", sep=";")
+print(data) 
+#data_to_insert = pd.read_csv("inmobiliaria.csv", sep=";")
+data_to_insert = pd.DataFrame(data_list)
 #borrar filas que ya existen
 try:
-    data_to_insert = data_to_insert[~data_to_insert["ID"].isin(data[1])]
+    data_to_insert = data_to_insert[~data_to_insert["ID"].astype(str).isin(data[1].astype(str))]
 except:
     pass
 
@@ -219,8 +220,8 @@ cursor = cnx.cursor()
 for _, row in data_to_insert.iterrows():
     query = """INSERT INTO ws_aviso (url, id_aviso, operacion, propiedad, titulo, currency, precio, ubicacion, 
         anhos_antiguedad, m2_superficie_total, m2_superficie_util, dormitorios, banhos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
-    # Convertir NaN a None
-    row = row.where(pd.notnull(row), None)
+    # Convertir "" a None
+    row = row.apply(lambda x: None if x == "" else x)
     print(query, tuple(row))
     cursor.execute(query, tuple(row))
 cnx.commit()
