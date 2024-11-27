@@ -207,11 +207,11 @@ cnx = con.connect(user="pablo_b",
 cursor = cnx.cursor()
 query = ("SELECT * FROM ws_inmobiliaria.ws_aviso;")
 cursor.execute(query)
-#put data into a pandas dataframe
+#poner data en datafra,e
 data = pd.DataFrame(cursor.fetchall())
 print(data)
 data_to_insert = pd.read_csv("inmobiliaria.csv", sep=";")
-#delete rows from data_to_insert that are already in csv file
+#borrar filas que ya existen
 try:
     data_to_insert = data_to_insert[~data_to_insert["ID"].isin(data[1])]
 except:
@@ -221,7 +221,7 @@ cursor = cnx.cursor()
 for _, row in data_to_insert.iterrows():
     query = """INSERT INTO ws_aviso (url, id_aviso, operacion, propiedad, titulo, currency, precio, ubicacion, 
         anhos_antiguedad, m2_superficie_total, m2_superficie_util, dormitorios, banhos) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
-    # Replace NaN values with None
+    # Convertir NaN a None
     row = row.where(pd.notnull(row), None)
     print(query, tuple(row))
     cursor.execute(query, tuple(row))
