@@ -9,9 +9,9 @@ import mysql.connector as con
 import pandas as pd
 import time
 
-
 OPERACIONES = ["Venta", "Arriendo"]
 PROPIEDADES = ["Departamentos", "Casas"]
+BUSQUEDA = "Punta Arenas"
 
 driver = webdriver.Chrome(service=Service("chromedriver-win64/chromedriver.exe"))
 
@@ -63,7 +63,7 @@ for operacion in OPERACIONES:
 
         element = driver.find_element(By.CSS_SELECTOR, "input[placeholder*='ciudad']")
 
-        element.send_keys("Punta Arenas")
+        element.send_keys(BUSQUEDA)
 
         #esperar a que aparezca lista de locaciones
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "LOCATION-list")))
