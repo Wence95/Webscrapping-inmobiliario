@@ -1,3 +1,4 @@
+import json
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -180,12 +181,16 @@ for operacion in OPERACIONES:
 
 driver.quit()
 
-#conexion a base de datos
-cnx = con.connect(user="pablo_b", 
-                              password="Webscrap123", 
-                              host="big-data-webscrapping2.mysql.database.azure.com", 
-                              port=3306, 
-                              database="ws_inmobiliaria")
+#get data for database connection from file db_connect.json
+
+with open("db_connect.json", "r") as file:
+    db_connect = json.load(file)
+
+cnx = con.connect(user=db_connect["user"],
+                password=db_connect["password"],
+                host=db_connect["host"],
+                port=db_connect["port"],
+                database=db_connect["database"])
 cursor = cnx.cursor()
 query = ("SELECT * FROM ws_inmobiliaria.ws_aviso;")
 cursor.execute(query)
